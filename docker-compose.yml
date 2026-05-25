@@ -1,0 +1,115 @@
+services:
+  kafka:
+    image: quay.io/strimzi/kafka:0.51.0-kafka-4.2.0
+    container_name: alp-kafka
+    hostname: kafka
+    command:
+      - sh
+      - -c
+      - |
+        cp ./config/server.properties /tmp/server.properties
+        cat /opt/kafka/custom/server-overrides.properties >> /tmp/server.properties
+
+        ./bin/kafka-storage.sh format \
+          --ignore-formatted \
+          --standalone \
+          -t $$KAFKA_CLUSTER_ID \
+          -c /tmp/server.properties
+
+        ./bin/kafka-server-start.sh /tmp/server.properties
+    env_file:
+      - ./config/kafka.env
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - ./config/server-overrides.properties:/opt/kafka/custom/server-overrides.properties
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: alp-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  strimzi-bridge:
+    image: quay.io/strimzi/kafka-bridge:0.33.1
+    container_name: alp-strimzi-bridge
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./config/bridge.properties:/opt/strimzi/config/bridge.properties
+    command:
+      - /opt/strimzi/bin/kafka_bridge_run.sh
+      - --config-file=/opt/strimzi/config/bridge.properties
+
+  jupyter:
+    image: quay.io/jupyter/pyspark-notebook:spark-4.0.0
+    container_name: jupyter
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    ports:
+      - 8888:8888
+    environment:
+      - PYSPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0 pyspark-shell
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=clickstream-events
+    volumes:
+      - ./notebook/work:/home/jovyan/notebook/work
+      - ./notebook/data:/home/jovyan/notebook/data
+    depends_on:
+      - kafka
+   
+  spark-master:
+    image: apache/spark:4.0.0
+    container_name: alp-spark-master
+    depends_on:
+      - kafka
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - HOME=/tmp
+      - SPARK_SUBMIT_OPTS=-Duser.home=/tmp
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=clickstream-events
+    ports:
+      - "7077:7077"
+      - "8082:8080"
+    volumes:
+      - ./jobs:/opt/alp/jobs
+      - ./checkpoints:/opt/alp/checkpoints
+      - ./dashboard_data:/opt/alp/dashboard_data
+
+  spark-worker:
+    image: apache/spark:4.0.0
+    container_name: alp-spark-worker
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=clickstream-events
+    ports:
+      - "8083:8081"
+    volumes:
+      - ./jobs:/opt/alp/jobs
+      - ./checkpoints:/opt/alp/checkpoints
+      - ./dashboard_data:/opt/alp/dashboard_data
+
+  streamlit:
+    build: ./dashboard
+    container_name: alp-streamlit
+    depends_on:
+      - spark-master
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard_data:/app/dashboard_data
+    environment:
+      - DASHBOARD_DIR=/app/dashboard_data
