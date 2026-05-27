@@ -1,0 +1,6 @@
+checkpoints/
+dashboard_data/
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+.env
