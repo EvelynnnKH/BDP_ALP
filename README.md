@@ -1,4 +1,4 @@
-# Kafka Producer Setup & Testing
+# Clickstream Data for Online Shopping Setup
 
 ## 1. Start Docker Services
 
