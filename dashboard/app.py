@@ -71,7 +71,7 @@ def live_dashboard():
         return
 
     rows = snapshot.get("rows", [])
-    counts_df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["event_type", "count"])
+    counts_df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["main_category", "count"])
     if not counts_df.empty:
         counts_df["count"] = counts_df["count"].astype(int)
         counts_df = counts_df.sort_values("count", ascending=False)
@@ -94,7 +94,7 @@ def live_dashboard():
         if counts_df.empty:
             st.info("Waiting for first batch...")
         else:
-            st.bar_chart(counts_df.set_index("event_type")["count"])
+            st.bar_chart(counts_df.set_index("main_category")["count"])
 
         if history:
             st.subheader("Total events per batch")
