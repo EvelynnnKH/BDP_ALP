@@ -204,3 +204,29 @@ Example Event:
 | price_level | integer | price category |
 | page | integer | visited page |
 | order_in_session | integer | click order in session |
+
+---
+
+## 6. Run Spark Raw Streaming Job
+
+Setelah Kafka Producer dipastikan aktif mengalirkan data, jalankan Spark Structured Streaming untuk melakukan penyerapan data mentah (*raw data ingestion*), pemetaan skema, dan pengecekan toleransi kesalahan (*fault-tolerance*).
+
+Buka terminal baru di root folder proyek, lalu jalankan perintah eksekusi *Spark Submit* absolut ke kontainer Master berikut:
+
+```bash
+docker exec -it alp-spark-master /opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0 \
+  /opt/alp/jobs/streaming_raw.py
+
+```
+
+Jika berhasil dijalankan, konsol terminal Spark akan memunculkan representasi data tabular dari micro-batch yang ter-update secara berkala (append mode):
+-------------------------------------------
+Batch: 1
+-------------------------------------------
++----------+----------+-------+-------------+--------------+------+--------+-----+-----------+----+----------------+
+|event_time|session_id|country|main_category|clothing_model|colour|location|price|price_level|page|order_in_session|
++----------+----------+-------+-------------+--------------+------+--------+-----+-----------+----+----------------+
+|2008-04-01|         2|     29|            4|            P1|     3|       1|   38|          1|   1|               8|
++----------+----------+-------+-------------+--------------+------+--------+-----+-----------+----+----------------+
