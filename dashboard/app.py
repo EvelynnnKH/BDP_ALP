@@ -49,7 +49,7 @@ with st.sidebar:
 # --- Header (static) ---
 st.title("Clickstream Aggregation Dashboard")
 st.caption(
-    "Live event-type counts produced by Spark Structured Streaming "
+    "Live main-category view counts produced by Spark Structured Streaming"
     "(`spark_clickstream_aggregation_simple.py`)"
 )
 
@@ -90,7 +90,7 @@ def live_dashboard():
     left, right = st.columns([1, 1])
 
     with left:
-        st.subheader("Events by type")
+        st.subheader("Views by Main Category")
         if counts_df.empty:
             st.info("Waiting for first batch...")
         else:
@@ -111,10 +111,15 @@ def live_dashboard():
         if history:
             st.subheader("Batch history")
             history_df = pd.DataFrame(history)
-            history_df = history_df[["batch_id", "updated_at", "total_events", "event_type_totals"]]
-            history_df["event_type_totals"] = history_df["event_type_totals"].apply(
+
+            totals_col = "event_type_totals" if "event_type_totals" in history_df.columns else "category_totals"
+
+            history_df = history_df[["batch_id", "updated_at", "total_events", totals_col]]
+            history_df[totals_col] = history_df[totals_col].apply(
                 lambda d: ", ".join(f"{k}: {v}" for k, v in sorted(d.items())) if isinstance(d, dict) else str(d)
             )
+
+            history_df = history_df.rename(columns={totals_col: "category_totals"})
             history_df = history_df.sort_values("batch_id", ascending=False)
             st.dataframe(history_df, use_container_width=True)
 
@@ -123,10 +128,9 @@ def live_dashboard():
         st.write(
             "Each Spark micro-batch runs every 10 seconds. "
             "The job reads all events from the Kafka topic since the earliest offset, "
-            "groups them by `event_type`, and counts them. "
-            "Because the output mode is `complete`, every batch shows the full running total — "
-            "counts will keep growing as the producer sends new events. "
-            "The batch history chart shows how quickly new events are arriving."
+            "groups them by `main_category`, and counts them. "
+            "Because the output mode is `complete`, every batch shows the full running total. "
+            "The batch history chart shows how quickly new category-view events are arriving."
         )
 
 
