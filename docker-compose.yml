@@ -49,6 +49,31 @@ services:
       - /opt/strimzi/bin/kafka_bridge_run.sh
       - --config-file=/opt/strimzi/config/bridge.properties
 
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: alp-namenode
+    environment:
+      - CLUSTER_NAME=alp-hdfs
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - ./data:/data
+      - hadoop_namenode:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: alp-datanode
+    depends_on:
+      - namenode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+
   jupyter:
     image: quay.io/jupyter/pyspark-notebook:spark-4.0.0
     container_name: jupyter
@@ -70,6 +95,7 @@ services:
     container_name: alp-spark-master
     depends_on:
       - kafka
+      - namenode
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     environment:
       - HOME=/tmp
@@ -83,12 +109,15 @@ services:
       - ./jobs:/opt/alp/jobs
       - ./checkpoints:/opt/alp/checkpoints
       - ./dashboard_data:/opt/alp/dashboard_data
+      - ./data:/opt/alp/data
+      - ./output:/opt/alp/output
 
   spark-worker:
     image: apache/spark:4.0.0
     container_name: alp-spark-worker
     depends_on:
       - spark-master
+      - namenode
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
       - SPARK_WORKER_MEMORY=2G
@@ -101,6 +130,8 @@ services:
       - ./jobs:/opt/alp/jobs
       - ./checkpoints:/opt/alp/checkpoints
       - ./dashboard_data:/opt/alp/dashboard_data
+      - ./data:/opt/alp/data
+      - ./output:/opt/alp/output
 
   streamlit:
     build: ./dashboard
@@ -113,3 +144,7 @@ services:
       - ./dashboard_data:/app/dashboard_data
     environment:
       - DASHBOARD_DIR=/app/dashboard_data
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
