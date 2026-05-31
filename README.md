@@ -38,7 +38,7 @@ Project ini menjawab ketiga tantangan tersebut dengan membangun pipeline yang me
 ---
  ## Project Description
 
-Proyek ini mengimplementasikan pipeline analitik clickstream secara real-time dan batch untuk toko pakaian online asal Polandia yang memiliki lebih dari 165.000 data. Setiap kali pengguna mengklik atau membuka halaman produk, aktivitas tersebut dicatat dan dikirim ke sistem untuk dianalisis secara langsung maupun secara keseluruhan.
+Proyek ini mengimplementasikan pipeline analitik clickstream secara real-time dan batch untuk toko pakaian online untuk wanita hamil asal Polandia yang memiliki lebih dari 165.000 data. Setiap kali pengguna mengklik atau membuka halaman produk, aktivitas tersebut dicatat dan dikirim ke sistem untuk dianalisis secara langsung maupun secara keseluruhan.
 
 Sistem ini menggunakan Apache Kafka untuk mengalirkan data, Apache Spark untuk memprosesnya, dan Streamlit untuk menampilkan hasilnya dalam bentuk grafik dan tabel yang mudah dipahami. Semua komponen dijalankan sekaligus hanya dalam satu perintah menggunakan Docker Compose.
 
@@ -49,7 +49,7 @@ Sistem ini menggunakan Apache Kafka untuk mengalirkan data, Apache Spark untuk m
 
 **File:** `data/e-shop-clothing-2008.csv`
 
-Dataset ini berisi data clickstream dari sebuah toko pakaian online di Polandia selama tahun 2008, dengan sekitar **165.000+ baris** data.
+Dataset ini berisi data clickstream dari sebuah toko pakaian online untuk wanita hamil di Polandia selama tahun 2008, dengan sekitar **165.000+ baris** data. Dataset ini mengambil data 5 bulan di 2008 untuk mengetahui dan membandingkan perilaku belanja (konsumsi) di Polandia dan negara sekitar di Eropa.
 
 ### Schema Dataset
 
