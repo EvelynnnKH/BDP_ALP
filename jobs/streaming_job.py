@@ -29,12 +29,53 @@ def write_dashboard_batch(batch_df, batch_id):
     dashboard_dir = Path(os.getenv("DASHBOARD_DIR", "/opt/alp/dashboard_data"))
     dashboard_dir.mkdir(parents=True, exist_ok=True)
 
-    rows = [row.asDict(recursive=True) for row in batch_df.collect()]
+    # Karena kita mengirimkan raw data ke sini, kita lakukan caching agar kalkulasi cepat
+    batch_df.cache()
 
+    # 1. Agregasi Utama: Kategori (Untuk Bar Chart Utama & Live Table)
+    categories_df = (
+        batch_df.groupBy("main_category")
+        .count()
+        .orderBy("main_category")
+    )
+    # Diubah ke list of dict sesuai kebutuhan kode lami kamu
+    rows = [row.asDict(recursive=True) for row in categories_df.collect()]
+
+    # 2. Agregasi Tambahan A: Warna Produk (Untuk Dashboard Overview Right Column)
+    color_df = (
+        batch_df.groupBy("colour")
+        .count()
+        .orderBy(F.desc("count"))
+    )
+    color_rows = [list(row.values()) for row in [r.asDict() for r in color_df.collect()]]
+
+    # 3. Agregasi Tambahan B: Top 10 Produk (Untuk Analytics Page)
+    product_df = (
+        batch_df.groupBy("clothing_model")
+        .count()
+        .orderBy(F.desc("count"))
+        .limit(10)
+    )
+    product_rows = [list(row.values()) for row in [r.asDict() for r in product_df.collect()]]
+
+    # 4. Agregasi Tambahan C: Analisis Sensitivitas Harga (Untuk Analytics Page)
+    price_df = (
+        batch_df.groupBy("main_category")
+        .agg(
+            F.avg("price").alias("avg_price"),
+            F.count("*").alias("total_clicks")
+        )
+    )
+    price_analytics = [list(row.values()) for row in [r.asDict() for r in price_df.collect()]]
+
+    # Susun Payload untuk latest_snapshot.json
     payload = {
         "batch_id": batch_id,
         "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "rows": rows,
+        "color_rows": color_rows,            # Data Baru 🚀
+        "product_rows": product_rows,        # Data Baru 🚀
+        "price_analytics": price_analytics   # Data Baru 🚀
     }
 
     latest_snapshot = dashboard_dir / "latest_snapshot.json"
@@ -62,14 +103,17 @@ def write_dashboard_batch(batch_df, batch_id):
 
     print()
     print("-" * 60)
-    print(f"Batch: {batch_id} | Total events: {total_events}")
+    print(f"Batch: {batch_id} | Total events processed in this batch: {total_events}")
     print("-" * 60)
-    batch_df.show(truncate=False)
+    categories_df.show(truncate=False)
+    
+    # Hapus cache setelah selesai diproses
+    batch_df.unpersist()
 
 
 def main():
     bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-    topic = os.getenv("KAFKA_TOPIC", "clickstream-fashion-events")
+    topic = os.getenv("KAFKA_TOPIC", "clickstream-events")
     checkpoint_dir = os.getenv(
         "CHECKPOINT_DIR",
         "/opt/alp/checkpoints/streaming_aggregation"
@@ -99,16 +143,11 @@ def main():
         .select("event.*")
     )
 
-    aggregated_df = (
-        parsed_df
-        .groupBy("main_category")
-        .count()
-        .orderBy("main_category")
-    )
-
+    # PERUBAHAN UTAMA: Kita kirim parsed_df (data mentah yang sudah ada skemanya)
+    # langsung ke foreachBatch, bukan mengirim data yang sudah terlanjur di-groupBy.
     query = (
-        aggregated_df.writeStream
-        .outputMode("complete")
+        parsed_df.writeStream
+        .outputMode("update") # Menggunakan update mode karena pemrosesan agregasi dipindah ke dalam batch function
         .foreachBatch(write_dashboard_batch)
         .option("checkpointLocation", checkpoint_dir)
         .trigger(processingTime="10 seconds")

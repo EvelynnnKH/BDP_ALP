@@ -757,6 +757,16 @@ Upload dataset ke HDFS:
 ```bash
 hdfs dfs -put -f "/data/e-shop clothing 2008.csv" /alp/input/
 ```
+Apabila error: No such file or directory coba cara ini:
+
+```bash
+cp “/data/e-shop clothing 2008.csv” /tmp/
+hdfs dfs -put -f “file:///tmp/e-shop clothing 2008.csv /alp/input/
+```
+
+Penjelasan: 
+1. Perintah cp (Copy) akan menyalin file dataset dari folder /data (yang biasanya sudah di-mount atau dihubungkan dari laptop ke Docker) ke dalam folder lokal sementara milik kontainer NameNode, yaitu folder /tmp/
+2. Maka selanjutnya Hadoop HDFS mengambil file yang baru saja ditaruh di folder /tmp/ tadi, lalu mengunggahnya (upload) masuk ke dalam sistem storage terdistribusi HDFS di folder /alp/input/
 
 Verifikasi upload berhasil:
 
