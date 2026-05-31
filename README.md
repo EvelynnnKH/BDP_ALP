@@ -1,6 +1,4 @@
 # Clickstream Analytics Pipeline for Online Fashion Shopping
-ALP Big Data Processing
----
 
  ## Table of Contents
  1. [Overview](#-overview)
