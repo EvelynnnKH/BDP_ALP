@@ -11,7 +11,7 @@ def main():
 
     spark.sparkContext.setLogLevel("WARN")
 
-    input_path = "hdfs://namenode:9000/alp/input/eshop_clothing_2008.csv"
+    input_path = "hdfs://namenode:9000/alp/input/e-shop clothing 2008.csv"
     output_path = "hdfs://namenode:9000/alp/output/batch_analysis"
 
     df = (
