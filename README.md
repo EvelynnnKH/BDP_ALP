@@ -1,24 +1,11 @@
 # Clickstream Analytics Pipeline for Online Fashion Shopping
 **Kelompok 2:**<br>
-Amanda Michelle Darwis - 07060223100..<br>
+Amanda Michelle Darwis - 0706022310051<br>
 Evelin Alim Natadjaja - 0706022310021<br>
-Evelyn Komalasari H - 07060223100..<br>
-Felicia Kathrin V. H - 07060223100..<br>
+Evelyn Komalasari H - 0706022310001<br>
+Felicia Kathrin V. H - 0706022310002<br>
 Heidy Mudita Sutedjo - 0706022310044<br>
 Sherin Alvinia Yonatan - 0706022310013
-
- ## Table of Contents
- 1. [Overview](#-overview)
- 2. [Problem Statement](#-problem-statement)
- 3. [Dataset](#-dataset)
- 4. [Architecture](#-architecture)
- 5. [Tech Stack](#-tech-stack)
- 6. [Project Structure](#-project-structure)
- 7. [Prerequisites](#-prerequisites)
- 8. [How to Run](#-how-to-run)
- 9. [Services & Ports](#-services--ports)
- 10. [Pipeline Explanation](#-pipeline-explanation)
- 11. [Dashboard](#-dashboard)
 
 ---
  ## Overview
@@ -38,6 +25,29 @@ Toko fashion online menghasilkan ribuan event klik setiap harinya. Tantangan uta
 - **Bagaimana menggabungkan analisis historis dan live?** Keputusan bisnis membutuhkan konteks dari masa lalu dan kondisi terkini.
 
 Project ini menjawab ketiga tantangan tersebut dengan membangun pipeline yang memisahkan jalur **streaming** (untuk analisis real-time) dan **batch** (untuk analisis historis).
+
+---
+### Streaming Analysis
+**Permasalahan:** Tim bisnis tidak dapat menunggu laporan harian untuk mengetahui produk atau kategori yang sedang populer karena tren pengguna dapat berubah dalam hitungan menit.
+
+**Pertanyaan yang ingin dijawab**
+- Kategori produk apa yang sedang paling banyak dilihat saat ini?
+- Warna produk apa yang sedang menjadi tren sekarang?
+- Produk apa yang sedang memperoleh klik terbanyak?
+- Berapa jumlah event yang masuk pada setiap periode waktu?
+- Bagaimana perubahan tren kategori dari batch ke batch secara real-time?
+
+### Batch Analysis
+**Permasalahan:** Data real-time hanya menunjukkan kondisi saat ini, tetapi tidak dapat menjelaskan pola perilaku pengguna secara keseluruhan selama periode yang panjang.
+
+**Pertanyaan yang ingin dijawab**
+- Berapa total aktivitas pengguna selama periode pengamatan?
+- Berapa jumlah sesi belanja unik yang terjadi?
+- Kategori produk mana yang paling populer secara keseluruhan?
+- Produk mana yang paling sering dilihat?
+- Negara mana yang memberikan kontribusi traffic terbesar?
+- Bagaimana hubungan harga produk dengan jumlah view?
+- Halaman katalog mana yang paling sering dikunjungi?
 
 ---
  ## Project Description
@@ -119,7 +129,7 @@ Setelah diproses oleh producer, setiap baris CSV dikirim ke Kafka dalam format J
 ### Alur Data (Data Flow)
 
 1. **CSV → Producer:** `producer.py` membaca file CSV baris per baris dan mengirimkannya sebagai JSON event ke Kafka secara streaming.
-2. **Kafka:** Bertindak sebagai message broker terpusat. Menyimpan event di topic `clickstream-fashion-events` dengan 3 partisi agar bisa diproses paralel.
+2. **Kafka:** Bertindak sebagai message broker terpusat. Menyimpan event di topic `clickstream-events` dengan 3 partisi agar bisa diproses paralel.
 3. **Spark Streaming:** Dua Spark job secara bersamaan mengkonsumsi data dari Kafka:
    - `streaming_raw.py` — menyerap data mentah dan memvalidasi skema
    - `streaming_aggregation.py` — melakukan agregasi real-time (hitungan per kategori, per negara, dll.)
@@ -170,7 +180,6 @@ project/
 ├── checkpoints/                # Spark Structured Streaming checkpoints (fault-tolerance)
 ├── dashboard_data/             # Output Spark → dibaca oleh Streamlit
 └── assets/
-    └── architecture.png        # Gambar arsitektur pipeline
 ```
 
 **Penjelasan folder penting:**
@@ -305,7 +314,7 @@ docker exec -it alp-kafka bash /opt/kafka/bin/kafka-topics.sh \
 ```
 (Alternatif) Create Kafka topic menggunakan command berikut:
 ```bash
-docker exec -it alp-kafka bash -c "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic clickstream-fashion-events --partitions 3 --replication-factor 1"
+docker exec -it alp-kafka bash -c "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic clickstream-events --partitions 3 --replication-factor 1"
 ```
 
 Jika berhasil, akan muncul output:
@@ -468,6 +477,9 @@ Batch: 1
 |2008-04-01|         2|     29|            4|            P1|     3|       1|   38|          1|   1|               8|
 +----------+----------+-------+-------------+--------------+------+--------+-----+-----------+----+----------------+
 
+Expected Result:
+(assets/step6-batch.png)
+
 ## 7. Run Spark Aggregation Streaming Job
 
 Setelah validasi *raw streaming* berhasil dilakukan, langkah berikutnya adalah menjalankan *Spark Structured Streaming Aggregation Job*. Job ini bertugas melakukan agregasi data clickstream secara real-time berdasarkan kategori produk utama (*main_category*) dan menghasilkan output yang dapat dibaca langsung oleh dashboard Streamlit.
@@ -498,6 +510,8 @@ Buka Spark Master UI untuk memastikan tidak ada lagi aplikasi Raw Streaming yang
 http://localhost:8082
 ```
 
+(assets/sparkmaster.png)
+
 Setelah resource Spark tersedia, jalankan Aggregation Job menggunakan perintah berikut:
 
 ```bash
@@ -523,6 +537,8 @@ Batch: 0 | Total events: 706
 |4            |110  |
 +-------------+-----+
 ```
+Expected Result:
+(assets/step7-result.png)
 
 Keterangan:
 
@@ -594,6 +610,8 @@ http://localhost:8501
 ```
 
 Dashboard akan membaca file `latest_snapshot.json` dan `history.jsonl` yang dihasilkan oleh Spark Aggregation Job.
+
+>(Warning) Apabila dashboard tidak terupdate, jalankan ulang Step 6.
 
 Jika dashboard berhasil berjalan, akan muncul beberapa komponen utama:
 
@@ -749,7 +767,8 @@ ls -l /data
 Contoh output:
 
 ```text
-e-shop clothing 2008.csv
+total 6520
+-rwxrwxrwx 1 root root 6675312 May 29 06:39 e-shop clothing 2008.csv
 ```
 
 Upload dataset ke HDFS:
@@ -864,6 +883,9 @@ maximum_price     : 82
 
 Selain menampilkan hasil ke terminal, Spark juga akan menyimpan hasil analisis ke HDFS.
 
+(assets/batch-1.png)
+(assets/batch-2.png)
+
 ---
 
 ## 12. Verify Batch Analysis Output
@@ -885,6 +907,19 @@ Output:
 ├── avg_price_by_category
 └── page_distribution
 ```
+
+```
+Found 6 items
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/avg_price_by_category
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/country_distribution
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/page_distribution
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/summary
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/top_categories
+drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/top_models
+```
+
+Spark Master:
+(assets/spark-worker.png)
 
 ---
 
@@ -939,6 +974,7 @@ Contoh output:
 {"clothing_model":"A11","count":2789}
 {"clothing_model":"P1","count":2681}
 {"clothing_model":"B10","count":2566}
+...
 ```
 
 ---
@@ -955,6 +991,7 @@ Contoh output:
 {"country":29,"count":133963}
 {"country":9,"count":18003}
 {"country":24,"count":4091}
+...
 ```
 
 ---
