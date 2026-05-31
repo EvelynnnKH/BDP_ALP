@@ -397,6 +397,9 @@ Jika berhasil, consumer akan menampilkan JSON event yang dikirim producer:
 }
 ```
 
+Expected Result:
+（asset/kafka-consumer-testing.png）
+
 ---
 
 # JSON Event Schema
