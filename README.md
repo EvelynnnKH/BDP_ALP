@@ -1,4 +1,11 @@
 # Clickstream Analytics Pipeline for Online Fashion Shopping
+**Kelompok 2:**<br>
+Amanda Michelle Darwis - 07060223100..<br>
+Evelin Alim Natadjaja - 0706022310021<br>
+Evelyn Komalasari H - 07060223100..<br>
+Felicia Kathrin V. H - 07060223100..<br>
+Heidy Mudita Sutedjo - 0706022310044<br>
+Sherin Alvinia Yonatan - 0706022310013
 
  ## Table of Contents
  1. [Overview](#-overview)
@@ -12,7 +19,6 @@
  9. [Services & Ports](#-services--ports)
  10. [Pipeline Explanation](#-pipeline-explanation)
  11. [Dashboard](#-dashboard)
- 12. [Team](#-team)
 
 ---
  ## Overview
@@ -187,25 +193,58 @@ Pastikan sudah terinstall:
 ---
 
 
-# Clickstream Data for Online Shopping Setup
+# Step by Step Guideline
 
-## 1. Start Docker Services
+## Step 1 — Clone Repository & Masuk ke Folder
 
-Pastikan berada di root folder project:
+Lakukan clone Github di VSCode dan berada di root folder project:
 
 ```bash
+git clone https://github.com/EvelynnnKH/BDP_ALP.git
 cd BDP_ALP
 ```
 
-Jalankan seluruh services menggunakan Docker Compose:
+Pastikan sudah membuka aplikasi Docker Desktop dan jalankan semua Docker services menggunakan Docker Compose:
 
 ```bash
 docker compose up
 ```
 
+(Warning) Jika sudah ada folder yang tersedia atau terdapat error pada saat build atau:
+
+```bash
+docker compose down
+docker compose up --build
+```
+
+> Tunggu beberapa waktu hingga semua container berjalan. Anda bisa memantau status di terminal.
+
+Jika semua container telah dijalankan, buka terminal baru, lalu jalankan:
+```bash
+docker compose ps
+```
+Expected Containers:
+## Service Architecture
+
+| Component | Technology | Container | Access URL |
+|------------|------------|------------|------------|
+| Message Broker | Apache Kafka | `alp-kafka` | `localhost:9092` |
+| Kafka Management UI | Kafka UI | `alp-kafka-ui` | `http://localhost:8080` |
+| Cluster Manager | Apache Spark Master | `alp-spark-master` | `http://localhost:8082` |
+| Processing Node | Apache Spark Worker | `alp-spark-worker` | `http://localhost:8083` |
+| Data Analytics Notebook | Jupyter PySpark | `jupyter` | `http://localhost:8888` |
+| Streaming Dashboard | Streamlit | `alp-streamlit` | `http://localhost:8501` |
+| REST Gateway | Strimzi Kafka Bridge | `alp-strimzi-bridge` | `http://localhost:8081` |
+
+Untuk menjalankan di background (detached mode):
+
+```bash
+docker compose up -d
+```
+
 ---
 
-## 2. Install Required Libraries
+## Step 2 — Install Dependencies (Required Libraries di luar Docker)
 
 ### Install dependencies untuk Spark jobs
 
@@ -246,7 +285,7 @@ Required packages:
 
 ---
 
-## 3. Create Kafka Topic
+## Step 3 — Buat Kafka Topic
 
 Kembali ke root project:
 
@@ -264,6 +303,10 @@ docker exec -it alp-kafka bash /opt/kafka/bin/kafka-topics.sh \
 --partitions 3 \
 --replication-factor 1
 ```
+(Alternatif) Create Kafka topic menggunakan command berikut:
+```bash
+docker exec -it alp-kafka bash -c "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic clickstream-fashion-events --partitions 3 --replication-factor 1"
+```
 
 Jika berhasil, akan muncul output:
 
@@ -279,7 +322,7 @@ Topic 'clickstream-fashion-events' already exists
 
 ---
 
-## 4. Run Kafka Producer
+## Step 4 — Jalankan Kafka Producer
 
 Masuk ke folder producer:
 
@@ -310,6 +353,8 @@ Sent: {
   'order_in_session': 1
 }
 ```
+Expected Result:
+![hasil yang diharapkan](assets/python-producer.png)
 
 Producer akan terus mengirim data ke Kafka secara streaming.
 
@@ -317,7 +362,7 @@ Producer akan terus mengirim data ke Kafka secara streaming.
 
 ## 5. Kafka Consumer Testing
 
-Buka terminal baru untuk memastikan Kafka menerima message.
+Buka **terminal baru** (biarkan producer tetap berjalan) untuk memastikan Kafka menerima message.
 
 Masuk ke Kafka container:
 
@@ -330,7 +375,7 @@ Jalankan Kafka consumer:
 ```bash
 /opt/kafka/bin/kafka-console-consumer.sh \
 --bootstrap-server localhost:9092 \
---topic clickstream-fashion-events \
+--topic clickstream-events \
 --from-beginning
 ```
 
@@ -396,11 +441,11 @@ Example Event:
 
 ---
 
-## 6. Run Spark Raw Streaming Job
+## Step 6 — Jalankan Spark Raw Streaming Job
 
 Setelah Kafka Producer dipastikan aktif mengalirkan data, jalankan Spark Structured Streaming untuk melakukan penyerapan data mentah (*raw data ingestion*), pemetaan skema, dan pengecekan toleransi kesalahan (*fault-tolerance*).
 
-Buka terminal baru di root folder proyek, lalu jalankan perintah eksekusi *Spark Submit* absolut ke kontainer Master berikut:
+Buka **terminal baru** di root folder project, lalu jalankan perintah eksekusi *Spark Submit* absolut ke kontainer Master berikut:
 
 ```bash
 docker exec -it alp-spark-master /opt/spark/bin/spark-submit \
