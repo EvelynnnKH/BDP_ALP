@@ -8,6 +8,10 @@ Heidy Mudita Sutedjo - 0706022310044<br>
 Sherin Alvinia Yonatan - 0706022310013
 
 ---
+## Reopen Project
+
+Jika telah melakukan seluruh tahapan dan ingin membuka ulang dashboard tanpa mengulangi seluruh setup, silakan ikuti panduan pada: [REOPEN.md](REOPEN.md)
+
  ## Overview
 
 Project ini membangun sebuah **end-to-end big data pipeline** yang mampu memproses data clickstream dari sebuah toko pakaian online secara **real-time (streaming)** maupun **batch**. Pipeline ini mensimulasikan alur kerja nyata di industri e-commerce, mulai dari pengiriman event klik pengguna, pemrosesan skala besar, hingga visualisasi insight di dashboard interaktif.
@@ -123,7 +127,7 @@ Setelah diproses oleh producer, setiap baris CSV dikirim ke Kafka dalam format J
 ---
 ## Architecture
 
-![Architecture Diagram](assets/architecture.png)
+![Architecture Diagram](assets/architecture-diagram.png)
 
 
 ### Alur Data (Data Flow)
@@ -132,7 +136,7 @@ Setelah diproses oleh producer, setiap baris CSV dikirim ke Kafka dalam format J
 2. **Kafka:** Bertindak sebagai message broker terpusat. Menyimpan event di topic `clickstream-events` dengan 3 partisi agar bisa diproses paralel.
 3. **Spark Streaming:** Dua Spark job secara bersamaan mengkonsumsi data dari Kafka:
    - `streaming_raw.py` — menyerap data mentah dan memvalidasi skema
-   - `streaming_aggregation.py` — melakukan agregasi real-time (hitungan per kategori, per negara, dll.)
+   - `streaming_job.py` — melakukan agregasi real-time (hitungan per kategori, per negara, dll.)
 4. **Spark Batch:** `batch_analysis.py` memproses keseluruhan dataset CSV untuk insight historis mendalam.
 5. **Dashboard:** Streamlit membaca output dari Spark (disimpan di `dashboard_data/`) dan menampilkannya sebagai grafik dan tabel interaktif.
 
@@ -157,6 +161,7 @@ Setelah diproses oleh producer, setiap baris CSV dikirim ke Kafka dalam format J
 project/
 ├── docker-compose.yml          # Definisi semua services (Kafka, Spark, Streamlit, dll)
 ├── README.md                   # Dokumentasi ini
+├── REOPEN.md                   # Dokumentasi untuk membuka ulang
 │
 ├── config/                     # Konfigurasi Kafka (server.properties, env, bridge)
 │
@@ -169,7 +174,7 @@ project/
 │
 ├── jobs/
 │   ├── streaming_raw.py        # Spark: konsumsi raw data dari Kafka
-│   ├── streaming_aggregation.py # Spark: agregasi real-time dari Kafka
+│   ├── streaming_job.py # Spark: agregasi real-time dari Kafka
 │   └── batch_analysis.py       # Spark: analisis batch dari CSV
 │
 ├── dashboard/
@@ -204,7 +209,7 @@ Pastikan sudah terinstall:
 
 # Step by Step Guideline
 
-## Step 1 — Clone Repository & Masuk ke Folder
+## 1. Clone Repository & Masuk ke Folder
 
 Lakukan clone Github di VSCode dan berada di root folder project:
 
@@ -253,7 +258,7 @@ docker compose up -d
 
 ---
 
-## Step 2 — Install Dependencies (Required Libraries di luar Docker)
+## 2. Install Dependencies (Required Libraries di luar Docker)
 
 ### Install dependencies untuk Spark jobs
 
@@ -294,7 +299,7 @@ Required packages:
 
 ---
 
-## Step 3 — Buat Kafka Topic
+## 3. Buat Kafka Topic
 
 Kembali ke root project:
 
@@ -331,7 +336,7 @@ Topic 'clickstream-events' already exists
 
 ---
 
-## Step 4 — Jalankan Kafka Producer
+## 4. Jalankan Kafka Producer
 
 Masuk ke folder producer:
 
@@ -407,7 +412,7 @@ Jika berhasil, consumer akan menampilkan JSON event yang dikirim producer:
 ```
 
 Expected Result:
-（asset/kafka-consumer-testing.png）
+![kafka-consumer-testing](assets/kafka-consumer-testing.png)
 
 ---
 
@@ -453,7 +458,7 @@ Example Event:
 
 ---
 
-## Step 6 — Jalankan Spark Raw Streaming Job
+## 6. Jalankan Spark Raw Streaming Job
 
 Setelah Kafka Producer dipastikan aktif mengalirkan data, jalankan Spark Structured Streaming untuk melakukan penyerapan data mentah (*raw data ingestion*), pemetaan skema, dan pengecekan toleransi kesalahan (*fault-tolerance*).
 
@@ -479,6 +484,7 @@ Batch: 1
 
 Expected Result:
 (assets/step6-batch.png)
+![batch](assets/step6-batch.png)
 
 ## 7. Run Spark Aggregation Streaming Job
 
@@ -509,8 +515,7 @@ Buka Spark Master UI untuk memastikan tidak ada lagi aplikasi Raw Streaming yang
 ```text
 http://localhost:8082
 ```
-
-(assets/sparkmaster.png)
+![spark-master](assets/sparkmaster.png)
 
 Setelah resource Spark tersedia, jalankan Aggregation Job menggunakan perintah berikut:
 
@@ -685,6 +690,12 @@ Contoh:
 ---
 
 ### Dashboard Validation
+
+![dashboard-1](assets/dashboard-1.png)
+![dashboard-2](assets/dashboard-2.png)
+![dashboard-3](assets/dashboard-3.png)
+![dashboard-4](assets/dashboard-4.png)
+![dashboard-5](assets/dashboard-5.png)
 
 Dashboard dianggap berhasil apabila:
 
@@ -883,8 +894,8 @@ maximum_price     : 82
 
 Selain menampilkan hasil ke terminal, Spark juga akan menyimpan hasil analisis ke HDFS.
 
-(assets/batch-1.png)
-(assets/batch-2.png)
+![batch-1](assets/batch-1.png)
+![batch-2](assets/batch-2.png)
 
 ---
 
@@ -919,7 +930,7 @@ drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_an
 ```
 
 Spark Master:
-(assets/spark-worker.png)
+![spark-worker](assets/spark-worker.png)
 
 ---
 
@@ -1029,6 +1040,11 @@ Contoh output:
 {"page":5,"count":2823}
 ```
 
+### Setup Selesai
+```
+ctrl + c 
+docker compose down
+```
 ---
 
 ## 13. Business Analysis
