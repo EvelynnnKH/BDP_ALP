@@ -960,7 +960,13 @@ Analisis yang dilakukan meliputi:
 - Average price by category
 - Page distribution
 
-Jalankan Batch Analysis menggunakan Spark Submit:
+Keluar dari container NameNode:
+
+````bash
+exit
+```
+
+Lalu jalankan Batch Analysis menggunakan Spark Submit:
 
 ```bash
 docker exec -it alp-spark-master /opt/spark/bin/spark-submit \
