@@ -962,7 +962,7 @@ Analisis yang dilakukan meliputi:
 
 Keluar dari container NameNode:
 
-````bash
+```bash
 exit
 ```
 
