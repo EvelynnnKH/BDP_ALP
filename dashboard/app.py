@@ -17,75 +17,95 @@ st.set_page_config(
     page_icon="🛍️"
 )
 
-# =======================================================
-# CUSTOM CSS FOR ZOMATO BRAND STYLING (RED & DARK RETAIL)
-# =======================================================
+# ===========
+# CUSTOM CSS 
+# ===========
 st.markdown("""
     <style>
-    /* Menggunakan tema light terang bawaan Streamlit */
-    .stApp {
-        background-color: #ffffff;
-    }
-    
-    /* Style untuk Banner Header Utama (Zomato Theme) */
+    /* Header banner */
     .header-container {
-        background-color: #fcfcfc; 
-        padding: 24px; 
-        border-radius: 12px; 
-        border-left: 6px solid #E23744; /* Zomato Corporate Red */
+        background-color: #1C1C1C;
+        padding: 24px;
+        border-radius: 12px;
+        border-left: 6px solid #E23744;
         margin-bottom: 25px;
-        border-top: 1px solid #f3f3f3;
-        border-right: 1px solid #f3f3f3;
-        border-bottom: 1px solid #f3f3f3;
-        box-shadow: 0 4px 12px rgba(28, 28, 28, 0.03);
     }
-    
-    /* Style untuk Grid Metrik (Kotak Kecil Minimalis Terang) */
+    .header-title {
+        color: #FFFFFF !important;
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+    }
+    .header-sub {
+        color: #CCCCCC !important;
+        margin: 8px 0 0 0;
+        font-size: 14px;
+    }
+    .header-badge {
+        color: #FF6B76 !important;
+        margin: 6px 0 0 0;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    /* Metric cards */
     .metric-card {
-        background-color: #ffffff;
-        border: 1px solid #ececec;
+        background-color: #1C1C1C;
+        border: 1px solid #333333;
         padding: 20px;
         border-radius: 12px;
         text-align: left;
-        box-shadow: 0 2px 8px rgba(28, 28, 28, 0.02);
     }
     .metric-label {
-        color: #696969;
-        font-size: 13px;
+        color: #AAAAAA !important;
+        font-size: 12px;
         margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
     }
     .metric-value {
-        color: #1C1C1C; /* Zomato Dark Text */
+        color: #FFFFFF !important;
         font-size: 26px;
         font-weight: 700;
+        line-height: 1.2;
     }
-    
-    /* Style untuk Quick Insights (Card Bawah Terang) */
+    .metric-value-red {
+        color: #FF6B76 !important;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .metric-value-sm {
+        color: #FFFFFF !important;
+        font-size: 15px;
+        font-weight: 600;
+        padding-top: 6px;
+        line-height: 1.4;
+    }
+
+    /* Insight cards */
     .insight-card {
-        background-color: #ffffff;
-        border: 1px solid #ececec;
-        border-top: 4px solid #E23744; /* Zomato Corporate Red */
+        background-color: #1C1C1C;
+        border: 1px solid #333333;
+        border-top: 4px solid #E23744;
         padding: 18px;
         border-radius: 8px;
         min-height: 120px;
-        box-shadow: 0 4px 10px rgba(28, 28, 28, 0.02);
     }
     .insight-title {
-        color: #1C1C1C;
+        color: #FFFFFF !important;
         font-size: 15px;
         font-weight: 700;
         margin-bottom: 8px;
     }
     .insight-desc {
-        color: #505050;
+        color: #CCCCCC !important;
         font-size: 13px;
-        line-height: 1.6;
+        line-height: 1.7;
+    }
+    .insight-desc b {
+        color: #FF6B76 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -109,14 +129,13 @@ def load_history(dashboard_dir: Path) -> list[dict]:
 
 
 # =========================
-# SIDEBAR (NAVIGATION STYLE)
+# SIDEBAR
 # =========================
 with st.sidebar:
     st.title("🛒 Clickstream App")
 
     page = st.selectbox("Pilih Halaman:", ["🏠 Home / Overview", "📈 Deep Analytics"])
 
-    # Mengubah dashboard_dir menjadi variabel internal (tanpa st.text_input)
     dashboard_dir = DEFAULT_DASHBOARD_DIR
 
     refresh_seconds = st.slider("Auto Refresh (sec)", 2, 30, 5)
@@ -144,7 +163,6 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         """)
         return
 
-    # Extract Data Kategori Utama
     rows = snapshot.get("rows", [])
     counts_df = pd.DataFrame(rows, columns=["main_category", "count"])
 
@@ -155,56 +173,49 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
     total_events = int(counts_df["count"].sum()) if not counts_df.empty else 0
     top_category = counts_df.iloc[0]["main_category"] if not counts_df.empty else "-"
     batch_id = snapshot.get("batch_id", "-")
+    updated_at = snapshot.get("updated_at", "-")
 
-    # ==========================================
-    # HEADER BANNER (ZOMATO BRAND STYLING)
-    # ==========================================
+    # ── HEADER ──
     st.markdown(f"""
         <div class="header-container">
-            <h1 style="color: #1C1C1C; margin: 0; font-size: 32px; font-weight: 800;">🛍️ Clickstream Dashboard</h1>
-            <p style="color: #505050; margin: 8px 0 0 0; font-size: 14px;">
-                Real-Time Customer Behavior & Online Shopping Operational Insights
-            </p>
-            <p style="color: #E23744; margin: 6px 0 0 0; font-size: 12px; font-weight: 700;">
-                Batch ID: {batch_id} | Streaming status: Active
-            </p>
+            <p class="header-title">🛍️ Clickstream Dashboard</p>
+            <p class="header-sub">Real-Time Customer Behavior & Online Shopping Operational Insights</p>
+            <p class="header-badge">Batch ID: {batch_id} &nbsp;|&nbsp; Streaming status: Active</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # ==========================================
-    # METRIC CARDS GRID (ZOMATO BRAND VALUE)
-    # ==========================================
+    # ── METRIC CARDS ──
     m1, m2, m3, m4 = st.columns(4)
-    
+
     with m1:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-label">🔥 total_events</div>
+                <div class="metric-label">🔥 Total Events</div>
                 <div class="metric-value">{total_events:,}</div>
             </div>
         """, unsafe_allow_html=True)
-        
+
     with m2:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-label">📦 batch id</div>
+                <div class="metric-label">📦 Batch ID</div>
                 <div class="metric-value">{batch_id}</div>
             </div>
         """, unsafe_allow_html=True)
-        
+
     with m3:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-label">🏷️ top category</div>
-                <div class="metric-value" style="color: #E23744;">{top_category}</div>
+                <div class="metric-label">🏷️ Top Category</div>
+                <div class="metric-value-red">{top_category}</div>
             </div>
         """, unsafe_allow_html=True)
-        
+
     with m4:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-label">🕒 last update</div>
-                <div class="metric-value" style="font-size: 16px; padding-top: 8px;">{snapshot.get("updated_at", "-")}</div>
+                <div class="metric-label">🕒 Last Update</div>
+                <div class="metric-value-sm">{updated_at}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -215,7 +226,6 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
     # ==========================================
     if page == "🏠 Home / Overview":
 
-        # Layout Utama: Kiri (Grafik-grafik) & Kanan (Tabel Live)
         left, right = st.columns([1.3, 1])
 
         with left:
@@ -223,7 +233,6 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
             if counts_df.empty:
                 st.info("Waiting for data...")
             else:
-                # Mengubah warna batang grafik kategori menjadi Merah Zomato
                 st.bar_chart(counts_df.set_index("main_category")["count"], color="#E23744")
 
             if history:
@@ -231,10 +240,8 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                 history_df = pd.DataFrame(history)[["batch_id", "total_events"]]
                 history_df["batch_id"] = pd.to_numeric(history_df["batch_id"])
                 history_df = history_df.sort_values("batch_id")
-                # Mengubah warna grafik garis tren menjadi Hitam Charcoal khas UI premium
-                st.line_chart(history_df.set_index("batch_id"), color="#1C1C1C")
+                st.line_chart(history_df.set_index("batch_id"), color="#E23744")
 
-                # GRAFIK KUMULATIF BERWARNA MERAH BRAND
                 st.markdown("### 📈 Cumulative Total Processed Events")
                 history_df["cumulative_events"] = history_df["total_events"].cumsum()
                 st.line_chart(history_df.set_index("batch_id")["cumulative_events"], color="#E23744")
@@ -243,13 +250,13 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
             st.markdown("### 🎨 Trending Colors")
             color_rows = snapshot.get("color_rows", [])
             color_df = pd.DataFrame(color_rows, columns=["colour", "count"])
-            
+
             if color_df.empty:
                 st.info("No color data available in snapshot. Group by 'colour' in Spark to activate.")
             else:
                 color_df["count"] = color_df["count"].astype(int)
                 color_df = color_df.sort_values("count", ascending=False)
-                
+
                 st.dataframe(
                     color_df,
                     column_config={
@@ -265,7 +272,6 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                     use_container_width=True
                 )
 
-                # SEKARANG AKTIF: GRAFIK BATANG HORIZONTAL WARNA TREN (Warna Merah Zomato)
                 st.markdown("### 📊 Visual Color Preferences")
                 st.bar_chart(color_df.set_index("colour")["count"], horizontal=True, color="#E23744")
 
@@ -276,39 +282,43 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                 st.dataframe(counts_df, use_container_width=True, hide_index=True)
 
         st.markdown("---")
-        
-        # ==========================================
-        # QUICK INSIGHTS CARDS (3 KOTAK DI BAWAH)
-        # ==========================================
+
+        # ── QUICK INSIGHTS ──
         st.markdown("## 💡 Quick Insights")
         i1, i2, i3 = st.columns(3)
-        
+
         with i1:
             st.markdown(f"""
                 <div class="insight-card">
                     <div class="insight-title">🚀 Peak Session Demand</div>
                     <div class="insight-desc">
-                        Kategori pakaian <b style="color: #E23744;">{top_category}</b> saat ini memimpin dominasi trafik pencarian dengan mencatatkan akumulasi klik paling tinggi dibanding produk retail lainnya.
+                        Kategori pakaian <b>{top_category}</b> saat ini memimpin dominasi trafik
+                        pencarian dengan mencatatkan akumulasi klik paling tinggi dibanding produk
+                        retail lainnya.
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            
+
         with i2:
             st.markdown("""
                 <div class="insight-card">
                     <div class="insight-title">🎨 Color Preferences</div>
                     <div class="insight-desc">
-                        Visualisasi progress bar di atas menunjukkan preferensi warna konsumen secara real-time. Melacak warna tren membantu optimalisasi stok pergudangan e-shop.
+                        Visualisasi progress bar di atas menunjukkan preferensi warna konsumen
+                        secara real-time. Melacak warna tren membantu optimalisasi stok
+                        pergudangan e-shop.
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            
+
         with i3:
             st.markdown(f"""
                 <div class="insight-card">
                     <div class="insight-title">📦 Stream Performance</div>
                     <div class="insight-desc">
-                        Berhasil memproses total <b>{total_events:,}</b> log aktivitas belanja dalam batch ke-<b>{batch_id}</b> langsung dari klaster Apache Spark Data Pipeline.
+                        Berhasil memproses total <b>{total_events:,}</b> log aktivitas belanja
+                        dalam batch ke-<b>{batch_id}</b> langsung dari klaster Apache Spark
+                        Data Pipeline.
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -326,20 +336,19 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
             st.markdown("### 🏆 Top 10 Most Viewed Products")
             product_rows = snapshot.get("product_rows", [])
             product_df = pd.DataFrame(product_rows, columns=["product_model", "clicks"])
-            
+
             if product_df.empty:
                 st.info("No product data available. Group by 'clothing_model' in Spark to activate.")
             else:
                 product_df["clicks"] = product_df["clicks"].astype(int)
                 product_df = product_df.sort_values("clicks", ascending=False).head(10)
-                # Mengubah warna grafik produk terlaris menjadi Merah Zomato
                 st.bar_chart(product_df.set_index("product_model")["clicks"], horizontal=True, color="#E23744")
 
         with chart_col2:
             st.markdown("### 💰 Price Sensitivity Analysis")
             price_rows = snapshot.get("price_analytics", [])
             price_df = pd.DataFrame(price_rows, columns=["main_category", "avg_price", "total_clicks"])
-            
+
             if price_df.empty:
                 st.info("No price analytics available. Aggregate 'price' and 'count' in Spark to activate.")
             else:
@@ -355,10 +364,8 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
 
         st.markdown("---")
 
-        # Batch History Data
         if history:
             history_df = pd.DataFrame(history)
-
             st.markdown("### Batch History Table")
 
             col = "event_type_totals" if "event_type_totals" in history_df.columns else "category_totals"
@@ -379,9 +386,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         else:
             st.info("No history data available")
 
-    # =========================
-    # FOOTER INFO
-    # =========================
+    # ── FOOTER ──
     with st.expander("ℹ How it works"):
         st.write("""
         - **Spark Streaming:** Membaca data log clickstream pakaian e-shop secara real-time lewat Kafka.
