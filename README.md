@@ -577,27 +577,115 @@ Contoh output:
 
 ```json
 {
-  "batch_id": 28,
-  "updated_at": "2026-05-29T13:38:33Z",
+  "batch_id": 6,
+  "updated_at": "2026-06-01T05:08:31Z",
   "rows": [
     {
-      "main_category": 1,
-      "count": 110
+      "main_category": "1",
+      "count": 4
     },
     {
-      "main_category": 2,
-      "count": 110
+      "main_category": "2",
+      "count": 3
     },
     {
-      "main_category": 3,
-      "count": 76
-    },
-    {
-      "main_category": 4,
-      "count": 49
+      "main_category": "3",
+      "count": 3
     }
+  ],
+  "color_rows": [
+    [
+      "3",
+      2
+    ],
+    [
+      "2",
+      2
+    ],
+    [
+      "5",
+      1
+    ],
+    [
+      "6",
+      1
+    ],
+    [
+      "4",
+      1
+    ],
+    [
+      "12",
+      1
+    ],
+    [
+      "13",
+      1
+    ],
+    [
+      "14",
+      1
+    ]
+  ],
+  "product_rows": [
+    [
+      "A29",
+      1
+    ],
+    [
+      "C19",
+      1
+    ],
+    [
+      "B17",
+      1
+    ],
+    [
+      "C57",
+      1
+    ],
+    [
+      "C7",
+      1
+    ],
+    [
+      "A15",
+      1
+    ],
+    [
+      "A4",
+      1
+    ],
+    [
+      "B10",
+      1
+    ],
+    [
+      "B1",
+      1
+    ],
+    [
+      "A11",
+      1
+    ]
+  ],
+  "price_analytics": [
+    [
+      "3",
+      43.0,
+      3
+    ],
+    [
+      "1",
+      48.25,
+      4
+    ],
+    [
+      "2",
+      54.0,
+      3
+    ]
   ]
-}
 ```
 
 File tersebut akan terus diperbarui setiap kali Spark menyelesaikan micro-batch baru.
