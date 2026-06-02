@@ -483,7 +483,6 @@ Batch: 1
 +----------+----------+-------+-------------+--------------+------+--------+-----+-----------+----+----------------+
 
 Expected Result:
-(assets/step6-batch.png)
 ![batch](assets/step6-batch.png)
 
 ## 7. Run Spark Aggregation Streaming Job
