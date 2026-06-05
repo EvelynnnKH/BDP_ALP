@@ -6,6 +6,7 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from pyspark.sql.functions import when, col
 
 
 def build_schema():
@@ -31,19 +32,60 @@ def write_dashboard_batch(batch_df, batch_id):
 
     # Karena kita mengirimkan raw data ke sini, kita lakukan caching agar kalkulasi cepat
     batch_df.cache()
+    batch_df = (
+        batch_df
+
+        # Main Category
+        .withColumn(
+            "main_category_name",
+            when(col("main_category") == "1", "Trousers")
+            .when(col("main_category") == "2", "Skirts")
+            .when(col("main_category") == "3", "Blouses")
+            .when(col("main_category") == "4", "Sale")
+            .otherwise("Unknown")
+        )
+
+        # Colour
+        .withColumn(
+            "colour_name",
+            when(col("colour") == "1", "Beige")
+            .when(col("colour") == "2", "Black")
+            .when(col("colour") == "3", "Blue")
+            .when(col("colour") == "4", "Brown")
+            .when(col("colour") == "5", "Burgundy")
+            .when(col("colour") == "6", "Gray")
+            .when(col("colour") == "7", "Green")
+            .when(col("colour") == "8", "Navy Blue")
+            .when(col("colour") == "9", "Multi Color")
+            .when(col("colour") == "10", "Olive")
+            .when(col("colour") == "11", "Pink")
+            .when(col("colour") == "12", "Red")
+            .when(col("colour") == "13", "Violet")
+            .when(col("colour") == "14", "White")
+            .otherwise("Unknown")
+        )
+
+        # Price Level
+        .withColumn(
+            "price_level_name",
+            when(col("price_level") == "1", "Above Average")
+            .when(col("price_level") == "2", "Below Average")
+            .otherwise("Unknown")
+        )
+    )  
 
     # 1. Agregasi Utama: Kategori (Untuk Bar Chart Utama & Live Table)
     categories_df = (
-        batch_df.groupBy("main_category")
-        .count()
-        .orderBy("main_category")
+    batch_df.groupBy("main_category_name")
+    .count()
+    .orderBy("main_category_name")
     )
     # Diubah ke list of dict sesuai kebutuhan kode lami kamu
     rows = [row.asDict(recursive=True) for row in categories_df.collect()]
 
     # 2. Agregasi Tambahan A: Warna Produk (Untuk Dashboard Overview Right Column)
     color_df = (
-        batch_df.groupBy("colour")
+        batch_df.groupBy("colour_name")
         .count()
         .orderBy(F.desc("count"))
     )
@@ -60,7 +102,7 @@ def write_dashboard_batch(batch_df, batch_id):
 
     # 4. Agregasi Tambahan C: Analisis Sensitivitas Harga (Untuk Analytics Page)
     price_df = (
-        batch_df.groupBy("main_category")
+        batch_df.groupBy("main_category_name")
         .agg(
             F.avg("price").alias("avg_price"),
             F.count("*").alias("total_clicks")
@@ -91,9 +133,9 @@ def write_dashboard_batch(batch_df, batch_id):
         "updated_at": payload["updated_at"],
         "total_events": total_events,
         "category_totals": {
-            str(r["main_category"]): int(r["count"])
+            str(r["main_category_name"]): int(r["count"])
             for r in rows
-            if r.get("main_category") is not None
+            if r.get("main_category_name") is not None
         },
     }
 
@@ -116,7 +158,7 @@ def main():
     topic = os.getenv("KAFKA_TOPIC", "clickstream-events")
     checkpoint_dir = os.getenv(
         "CHECKPOINT_DIR",
-        "/opt/alp/checkpoints/streaming_aggregation"
+        "/tmp/checkpoints/streaming_aggregation"
     )
 
     spark = (

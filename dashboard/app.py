@@ -164,14 +164,14 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         return
 
     rows = snapshot.get("rows", [])
-    counts_df = pd.DataFrame(rows, columns=["main_category", "count"])
+    counts_df = pd.DataFrame(rows)
 
     if not counts_df.empty:
         counts_df["count"] = counts_df["count"].astype(int)
         counts_df = counts_df.sort_values("count", ascending=False)
 
     total_events = int(counts_df["count"].sum()) if not counts_df.empty else 0
-    top_category = counts_df.iloc[0]["main_category"] if not counts_df.empty else "-"
+    top_category = counts_df.iloc[0]["main_category_name"] if not counts_df.empty else "-"
     batch_id = snapshot.get("batch_id", "-")
     updated_at = snapshot.get("updated_at", "-")
 
@@ -233,7 +233,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
             if counts_df.empty:
                 st.info("Waiting for data...")
             else:
-                st.bar_chart(counts_df.set_index("main_category")["count"], color="#E23744")
+                st.bar_chart(counts_df.set_index("main_category_name")["count"], color="#E23744")
 
             if history:
                 st.markdown("### 📈 Event Trend per Batch")
@@ -249,7 +249,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         with right:
             st.markdown("### 🎨 Trending Colors")
             color_rows = snapshot.get("color_rows", [])
-            color_df = pd.DataFrame(color_rows, columns=["colour", "count"])
+            color_df = pd.DataFrame(color_rows, columns=["colour_name", "count"])
 
             if color_df.empty:
                 st.info("No color data available in snapshot. Group by 'colour' in Spark to activate.")
@@ -260,7 +260,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                 st.dataframe(
                     color_df,
                     column_config={
-                        "colour": "Product Color",
+                        "colour_name": "Product Color",
                         "count": st.column_config.ProgressColumn(
                             "Total Clicks",
                             format="%d",
@@ -273,7 +273,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                 )
 
                 st.markdown("### 📊 Visual Color Preferences")
-                st.bar_chart(color_df.set_index("colour")["count"], horizontal=True, color="#E23744")
+                st.bar_chart(color_df.set_index("colour_name")["count"], horizontal=True, color="#E23744")
 
             st.markdown("### 📋 Live Data Feed Table")
             if counts_df.empty:
@@ -347,7 +347,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         with chart_col2:
             st.markdown("### 💰 Price Sensitivity Analysis")
             price_rows = snapshot.get("price_analytics", [])
-            price_df = pd.DataFrame(price_rows, columns=["main_category", "avg_price", "total_clicks"])
+            price_df = pd.DataFrame(price_rows, columns=["main_category_name", "avg_price", "total_clicks"])
 
             if price_df.empty:
                 st.info("No price analytics available. Aggregate 'price' and 'count' in Spark to activate.")
@@ -358,7 +358,7 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
                     data=price_df,
                     x="avg_price",
                     y="total_clicks",
-                    color="main_category",
+                    color="main_category_name",
                     size="total_clicks"
                 )
 
