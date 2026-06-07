@@ -576,113 +576,97 @@ Contoh output:
 
 ```json
 {
-  "batch_id": 6,
-  "updated_at": "2026-06-01T05:08:31Z",
+    "batch_id": 11,
+  "updated_at": "2026-06-07T08:03:31Z",
   "rows": [
     {
-      "main_category": "1",
+      "main_category_name": "Sale",
+      "count": 2
+    },
+    {
+      "main_category_name": "Skirts",
       "count": 4
     },
     {
-      "main_category": "2",
-      "count": 3
-    },
-    {
-      "main_category": "3",
-      "count": 3
+      "main_category_name": "Trousers",
+      "count": 4
     }
   ],
   "color_rows": [
     [
-      "3",
+      "Beige",
+      3
+    ],
+    [
+      "Multi Color",
+      3
+    ],
+    [
+      "Green",
       2
     ],
     [
-      "2",
-      2
-    ],
-    [
-      "5",
+      "Olive",
       1
     ],
     [
-      "6",
-      1
-    ],
-    [
-      "4",
-      1
-    ],
-    [
-      "12",
-      1
-    ],
-    [
-      "13",
-      1
-    ],
-    [
-      "14",
+      "Blue",
       1
     ]
   ],
   "product_rows": [
     [
-      "A29",
+      "P16",
+      2
+    ],
+    [
+      "A28",
       1
     ],
     [
-      "C19",
+      "B31",
       1
     ],
     [
-      "B17",
+      "B30",
       1
     ],
     [
-      "C57",
-      1
-    ],
-    [
-      "C7",
-      1
-    ],
-    [
-      "A15",
-      1
-    ],
-    [
-      "A4",
-      1
-    ],
-    [
-      "B10",
-      1
-    ],
-    [
-      "B1",
+      "B28",
       1
     ],
     [
       "A11",
       1
+    ],
+    [
+      "B4",
+      1
+    ],
+    [
+      "A16",
+      1
+    ],
+    [
+      "A21",
+      1
     ]
   ],
   "price_analytics": [
     [
-      "3",
-      43.0,
-      3
+      "Sale",
+      33.0,
+      2
     ],
     [
-      "1",
-      48.25,
+      "Skirts",
+      51.0,
       4
     ],
     [
-      "2",
-      54.0,
-      3
+      "Trousers",
+      50.0,
+      4
     ]
   ]
 ```
@@ -877,8 +861,8 @@ hdfs dfs -put -f "/data/e-shop clothing 2008.csv" /alp/input/
 Apabila error: No such file or directory coba cara ini:
 
 ```bash
-cp “/data/e-shop clothing 2008.csv” /tmp/
-hdfs dfs -put -f “file:///tmp/e-shop clothing 2008.csv /alp/input/
+cp "/data/e-shop clothing 2008.csv" "/tmp/e-shop clothing 2008.csv"
+hdfs dfs -put -f "file:///tmp/e-shop clothing 2008.csv" "/alp/input/e-shop clothing 2008.csv"
 ```
 
 Penjelasan: 
@@ -963,6 +947,14 @@ Keluar dari container NameNode:
 
 ```bash
 exit
+```
+
+Sebelum menjalankan Batch Analysis Job, pastikan proses `streaming_job.py` telah dihentikan terlebih dahulu.
+
+Jika terminal Agreggation Streaming masih berjalan, hentikan dengan:
+
+```bash
+Ctrl + C
 ```
 
 Lalu jalankan Batch Analysis menggunakan Spark Submit:
@@ -1132,6 +1124,73 @@ Contoh output:
 {"page":4,"count":8861}
 {"page":5,"count":2823}
 ```
+### Check Batch Analysis Dashboard
+
+Setelah Batch Analysis Job berhasil dijalankan, Spark tidak hanya menyimpan output analisis ke HDFS, tetapi juga menghasilkan file dashboard batch pada folder `dashboard_data`.
+
+Verifikasi bahwa file dashboard batch berhasil dibuat:
+
+```bash
+ls dashboard_data
+```
+
+Expected output:
+
+```text
+dashboard_data/
+├── batch_analysis.json
+└── history.jsonl
+└── latest_snapshot.json
+```
+
+File batch_analysis.json berisi hasil ringkasan batch analysis yang akan dibaca oleh Streamlit Dashboard, seperti:
+- Dataset summary
+- Top product categories
+- Top clothing models
+- Country distribution
+- Average price by category
+- Page distribution
+
+Untuk melihat isi file batch dashboard secara langsung, jalankan:
+
+```bash
+cat dashboard_data/batch_analysis.json
+```
+
+Jika file batch_analysis.json sudah muncul, buka atau refresh Streamlit Dashboard pada browser:
+
+```text
+http://localhost:8501
+```
+
+Pada sidebar dashboard, pilih dropdown halaman:
+```text
+📦 Batch Analysis
+```
+
+Dashboard Batch Analysis akan menampilkan hasil analisis historis dari dataset yang telah diproses menggunakan Spark Batch Processing.
+Apabila halaman Batch Analysis belum muncul atau data belum berubah, lakukan refresh browser secara manual. Jika masih belum muncul, restart container Streamlit:
+
+```bash
+docker restart alp-streamlit
+```
+
+Kemudian buka kembali dashboard:
+```text
+http://localhost:8051
+```
+
+Dashboard batch dianggap berhasil apabila halaman 📦 Batch Analysis menampilkan:
+- Total Events
+- Unique Sessions
+- Average Price
+- Minimum Price
+- Maximum Price
+- Most Popular Main Categories
+- Top Clothing Models
+- Country Distribution
+- Average Price by Category
+- Page Distribution
 
 ### Setup Selesai
 ```

@@ -1,3 +1,8 @@
+import json
+import os
+from datetime import datetime
+from pathlib import Path
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
@@ -103,6 +108,45 @@ def main():
     page_distribution_df.write.mode("overwrite").json(f"{output_path}/page_distribution")
 
     print(f"\nBatch analysis output saved to: {output_path}")
+
+    dashboard_dir = Path(os.getenv("DASHBOARD_DIR", "/opt/alp/dashboard_data"))
+    dashboard_dir.mkdir(parents=True, exist_ok=True)
+
+    batch_dashboard_payload = {
+        "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "summary": summary_df.collect()[0].asDict(recursive=True),
+        "top_categories": [
+            row.asDict(recursive=True)
+            for row in top_categories_df.collect()
+        ],
+        "top_models": [
+            row.asDict(recursive=True)
+            for row in top_models_df.limit(20).collect()
+        ],
+        "country_distribution": [
+            row.asDict(recursive=True)
+            for row in country_distribution_df.limit(20).collect()
+        ],
+        "avg_price_by_category": [
+            row.asDict(recursive=True)
+            for row in avg_price_by_category_df.collect()
+        ],
+        "page_distribution": [
+            row.asDict(recursive=True)
+            for row in page_distribution_df.collect()
+        ],
+    }
+
+    batch_dashboard_path = dashboard_dir / "batch_analysis.json"
+    temp_batch_dashboard_path = dashboard_dir / "batch_analysis.json.tmp"
+
+    temp_batch_dashboard_path.write_text(
+        json.dumps(batch_dashboard_payload, indent=2),
+        encoding="utf-8"
+    )
+    temp_batch_dashboard_path.replace(batch_dashboard_path)
+
+    print(f"Batch dashboard data saved to: {batch_dashboard_path}")
 
     spark.stop()
 

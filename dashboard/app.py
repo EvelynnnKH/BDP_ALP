@@ -127,6 +127,11 @@ def load_history(dashboard_dir: Path) -> list[dict]:
         return []
     return [json.loads(l) for l in history_path.read_text().splitlines() if l.strip()]
 
+def load_batch_analysis(dashboard_dir: Path) -> dict | None:
+    batch_path = dashboard_dir / "batch_analysis.json"
+    if not batch_path.exists():
+        return None
+    return json.loads(batch_path.read_text(encoding="utf-8"))
 
 # =========================
 # SIDEBAR
@@ -134,7 +139,7 @@ def load_history(dashboard_dir: Path) -> list[dict]:
 with st.sidebar:
     st.title("🛒 Clickstream App")
 
-    page = st.selectbox("Pilih Halaman:", ["🏠 Home / Overview", "📈 Deep Analytics"])
+    page = st.selectbox("Pilih Halaman:", ["🏠 Home / Overview", "📈 Deep Analytics", "📦 Batch Analysis"])
 
     dashboard_dir = DEFAULT_DASHBOARD_DIR
 
@@ -386,6 +391,235 @@ docker exec -it week10-spark-master /opt/spark/bin/spark-submit \
         else:
             st.info("No history data available")
 
+        # ==========================================
+    # HALAMAN 3: BATCH ANALYSIS
+    # ==========================================
+    elif page == "📦 Batch Analysis":
+
+        batch_data = load_batch_analysis(dashboard_dir)
+
+        st.markdown("## 📦 Batch Analysis Dashboard")
+        st.caption("Historical clickstream insights generated from Spark Batch Processing and HDFS data.")
+
+        if batch_data is None:
+            st.warning("⚠ Batch analysis data not found. Run Spark Batch Analysis first.")
+            st.code("""
+docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
+  --master spark://spark-master:7077 \\
+  /opt/alp/jobs/batch_analysis.py
+            """)
+            return
+
+        updated_at = batch_data.get("updated_at", "-")
+        summary = batch_data.get("summary", {})
+
+        total_events = int(summary.get("total_events", 0))
+        unique_sessions = int(summary.get("unique_sessions", 0))
+        average_price = float(summary.get("average_price", 0))
+        minimum_price = int(summary.get("minimum_price", 0))
+        maximum_price = int(summary.get("maximum_price", 0))
+
+        st.markdown(f"""
+            <div class="header-container">
+                <p class="header-title">📦 Historical Batch Analysis</p>
+                <p class="header-sub">Long-term clickstream behavior based on full dataset processing</p>
+                <p class="header-badge">Last Batch Update: {updated_at}</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        m1, m2, m3, m4, m5 = st.columns(5)
+
+        with m1:
+            st.metric("Total Events", f"{total_events:,}")
+
+        with m2:
+            st.metric("Unique Sessions", f"{unique_sessions:,}")
+
+        with m3:
+            st.metric("Average Price", f"{average_price:.2f}")
+
+        with m4:
+            st.metric("Minimum Price", f"{minimum_price}")
+
+        with m5:
+            st.metric("Maximum Price", f"{maximum_price}")
+
+        st.markdown("---")
+
+        chart_col1, chart_col2 = st.columns(2)
+
+        with chart_col1:
+            st.markdown("### 🏷️ Most Popular Main Categories")
+            top_categories = batch_data.get("top_categories", [])
+            top_categories_df = pd.DataFrame(top_categories)
+
+            if top_categories_df.empty:
+                st.info("No category data available.")
+            else:
+                top_categories_df["main_category"] = top_categories_df["main_category"].astype(str)
+                top_categories_df["count"] = top_categories_df["count"].astype(int)
+
+                st.bar_chart(
+                    top_categories_df.set_index("main_category")["count"],
+                    color="#E23744"
+                )
+
+                st.dataframe(
+                    top_categories_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+        with chart_col2:
+            st.markdown("### 🧥 Top 20 Most Viewed Clothing Models")
+            top_models = batch_data.get("top_models", [])
+            top_models_df = pd.DataFrame(top_models)
+
+            if top_models_df.empty:
+                st.info("No clothing model data available.")
+            else:
+                top_models_df["count"] = top_models_df["count"].astype(int)
+                top_models_df = top_models_df.sort_values("count", ascending=False)
+
+                st.bar_chart(
+                    top_models_df.set_index("clothing_model")["count"],
+                    horizontal=True,
+                    color="#E23744"
+                )
+
+                st.dataframe(
+                    top_models_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+        st.markdown("---")
+
+        chart_col3, chart_col4 = st.columns(2)
+
+        with chart_col3:
+            st.markdown("### 🌍 Country Distribution")
+            country_distribution = batch_data.get("country_distribution", [])
+            country_df = pd.DataFrame(country_distribution)
+
+            if country_df.empty:
+                st.info("No country distribution data available.")
+            else:
+                country_df["country"] = country_df["country"].astype(str)
+                country_df["count"] = country_df["count"].astype(int)
+
+                st.bar_chart(
+                    country_df.set_index("country")["count"],
+                    horizontal=True,
+                    color="#E23744"
+                )
+
+                st.dataframe(
+                    country_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+        with chart_col4:
+            st.markdown("### 💰 Average Price by Category")
+            avg_price_by_category = batch_data.get("avg_price_by_category", [])
+            avg_price_df = pd.DataFrame(avg_price_by_category)
+
+            if avg_price_df.empty:
+                st.info("No average price data available.")
+            else:
+                avg_price_df["main_category"] = avg_price_df["main_category"].astype(str)
+                avg_price_df["average_price"] = avg_price_df["average_price"].astype(float)
+                avg_price_df["total_views"] = avg_price_df["total_views"].astype(int)
+
+                st.scatter_chart(
+                    data=avg_price_df,
+                    x="average_price",
+                    y="total_views",
+                    color="main_category",
+                    size="total_views"
+                )
+
+                st.dataframe(
+                    avg_price_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+        st.markdown("---")
+
+        st.markdown("### 📄 Page Distribution")
+        page_distribution = batch_data.get("page_distribution", [])
+        page_df = pd.DataFrame(page_distribution)
+
+        if page_df.empty:
+            st.info("No page distribution data available.")
+        else:
+            page_df["page"] = page_df["page"].astype(str)
+            page_df["count"] = page_df["count"].astype(int)
+
+            st.bar_chart(
+                page_df.set_index("page")["count"],
+                color="#E23744"
+            )
+
+            st.dataframe(
+                page_df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+        st.markdown("---")
+
+        st.markdown("## 💡 Batch Business Insights")
+
+        insight_col1, insight_col2, insight_col3 = st.columns(3)
+
+        top_category = "-"
+        if not top_categories_df.empty:
+            top_category = top_categories_df.sort_values("count", ascending=False).iloc[0]["main_category"]
+
+        top_model = "-"
+        if not top_models_df.empty:
+            top_model = top_models_df.sort_values("count", ascending=False).iloc[0]["clothing_model"]
+
+        top_country = "-"
+        if not country_df.empty:
+            top_country = country_df.sort_values("count", ascending=False).iloc[0]["country"]
+
+        with insight_col1:
+            st.markdown(f"""
+                <div class="insight-card">
+                    <div class="insight-title">🏷️ Category Demand</div>
+                    <div class="insight-desc">
+                        Main category <b>{top_category}</b> menjadi kategori dengan jumlah view tertinggi
+                        dalam keseluruhan dataset batch.
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with insight_col2:
+            st.markdown(f"""
+                <div class="insight-card">
+                    <div class="insight-title">🧥 Product Popularity</div>
+                    <div class="insight-desc">
+                        Clothing model <b>{top_model}</b> menjadi produk yang paling sering dilihat
+                        oleh pengguna selama periode pengamatan.
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with insight_col3:
+            st.markdown(f"""
+                <div class="insight-card">
+                    <div class="insight-title">🌍 Market Concentration</div>
+                    <div class="insight-desc">
+                        Country <b>{top_country}</b> memberikan kontribusi traffic terbesar,
+                        sehingga dapat menjadi prioritas target pasar.
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            
     # ── FOOTER ──
     with st.expander("ℹ How it works"):
         st.write("""
