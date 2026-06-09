@@ -23,7 +23,7 @@ services:
       - "9092:9092"
       - "29092:29092"
     volumes:
-      - ./config/server-overrides.properties:/opt/kafka/custom/server-overrides.properties
+      - ./config:/opt/kafka/custom
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -44,7 +44,7 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - ./config/bridge.properties:/opt/strimzi/config/bridge.properties
+      - ./config:/opt/strimzi/config
     command:
       - /opt/strimzi/bin/kafka_bridge_run.sh
       - --config-file=/opt/strimzi/config/bridge.properties
