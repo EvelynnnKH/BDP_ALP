@@ -689,84 +689,51 @@ Dashboard akan membaca file `latest_snapshot.json` dan `history.jsonl` yang diha
 
 >(Warning) Apabila dashboard tidak terupdate, jalankan ulang Step 6.
 
+![dashboard-1](assets/dashboard-1.png)
+![dashboard-2](assets/dashboard-2.png)
+
 Jika dashboard berhasil berjalan, akan muncul beberapa komponen utama:
 
 ### Real-Time Metrics
 
 Dashboard menampilkan informasi ringkas mengenai kondisi streaming saat ini, meliputi:
 
-- Batch ID terbaru
-- Timestamp pembaruan terakhir
-- Total event yang telah diproses
+- Total Events: Jumlah kumulatif event yang telah diproses Spark sejak job dimulai.
+- Batch ID: Nomor micro-batch terkini yang sedang diproses.
+- Top Category: Kategori produk dengan jumlah klik tertinggi pada batch ini.
+- Last Update: Timestamp terakhir snapshot diperbarui
+>> Finding: Kartu Top Category secara langsung mengidentifikasi kategori produk yang paling diminati pengguna saat ini. Pada contoh di atas, kategori Blouses memimpin trafik, mengindikasikan produk atasan wanita menjadi prioritas pencarian pengunjung toko.
 
-Contoh:
 
-```text
-Batch ID: 28
-Updated At: 2026-05-29T13:38:33Z
-Total Events: 345
-```
+### Category Distribution (Current Batch)
 
-### Views by Main Category
+Bar chart yang menunjukkan distribusi jumlah klik per kategori produk fashion pada batch terkini.
 
-Visualisasi bar chart yang menunjukkan jumlah view untuk masing-masing kategori produk fashion berdasarkan hasil agregasi Spark Structured Streaming.
+>> Finding: Dominasi satu kategori dibanding lainnya, seperti Blouses pada contoh di atas yang mengindikasikan produk tersebut sedang aktif dijelajahi pengguna secara real-time. Informasi ini dapat digunakan untuk memprioritaskan penempatan produk unggulan atau menjalankan promosi kilat pada kategori yang sedang ramai.
 
-Contoh:
+###  Trending Colors
+Tabel progress bar dan bar chart horizontal yang menampilkan preferensi warna produk berdasarkan jumlah klik.
 
-```text
-Main Category 1 : 110
-Main Category 2 : 110
-Main Category 3 : 76
-Main Category 4 : 49
-```
+>> Finding: Dominasi warna Gray mencerminkan preferensi konsumen terhadap warna netral. Informasi ini berguna untuk optimasi stok gudang — produk dengan warna populer perlu dipastikan ketersediaannya lebih tinggi dibanding warna lain.
 
-### Total Events per Batch
+### Event Trend per Batch
+Line chart yang menunjukkan jumlah total event yang diproses pada setiap micro-batch dari waktu ke waktu.
 
-Grafik line chart yang menunjukkan perkembangan jumlah event yang berhasil diproses pada setiap micro-batch.
+>>Finding: Lonjakan tajam di awal kemudian melandai menunjukkan pola produksi data yang wajar. Jika grafik tiba-tiba turun atau flat, itu adalah sinyal bahwa producer atau Kafka job mengalami masalah dan perlu dicek.
 
-Karena aggregation menggunakan *complete output mode*, jumlah event akan terus bertambah selama producer masih mengirimkan data ke Kafka.
+### Cumulative Total Processed Events
+Line chart yang menampilkan akumulasi total event sejak streaming dimulai.
 
-### Current Snapshot Rows
+>> Finding: Kurva yang terus naik secara konsisten mengkonfirmasi pipeline berjalan normal. Kurva yang mendatar mengindikasikan producer berhenti mengirim data.
 
-Tabel yang menampilkan hasil agregasi terbaru yang tersimpan pada file `latest_snapshot.json`.
+### Quick Insights
+Tiga kartu ringkasan otomatis yang menyajikan interpretasi singkat dari data terkini, meliputi kategori dengan trafik tertinggi, tren preferensi warna konsumen, dan performa keseluruhan pipeline streaming.
 
-Contoh:
 
-| main_category | count |
-|--------------|-------|
-| 1 | 110 |
-| 2 | 110 |
-| 3 | 76 |
-| 4 | 49 |
-
-### Batch History
-
-Tabel riwayat seluruh micro-batch yang telah diproses Spark.
-
-Informasi yang ditampilkan meliputi:
-
-- Batch ID
-- Timestamp update
-- Total events
-- Distribusi count per kategori
-
-Contoh:
-
-| batch_id | total_events |
-|----------|-------------|
-| 28 | 345 |
-| 27 | 334 |
-| 26 | 323 |
 
 ---
 
 ### Dashboard Validation
-
-![dashboard-1](assets/dashboard-1.png)
-![dashboard-2](assets/dashboard-2.png)
-![dashboard-3](assets/dashboard-3.png)
-![dashboard-4](assets/dashboard-4.png)
-![dashboard-5](assets/dashboard-5.png)
 
 Dashboard dianggap berhasil apabila:
 
@@ -981,6 +948,8 @@ Selain menampilkan hasil ke terminal, Spark juga akan menyimpan hasil analisis k
 
 ![batch-1](assets/batch-1.png)
 ![batch-2](assets/batch-2.png)
+![batch-3](assets/batch-3.png)
+![batch-4](assets/batch-4.png)
 
 ---
 
@@ -1000,18 +969,24 @@ Output:
 ├── top_categories
 ├── top_models
 ├── country_distribution
+└── colour_distribution
+└── location_distribution
+└── price_level_distribution
 ├── avg_price_by_category
 └── page_distribution
 ```
 
 ```
-Found 6 items
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/avg_price_by_category
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/country_distribution
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/page_distribution
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/summary
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/top_categories
-drwxr-xr-x   - spark supergroup          0 2026-05-31 16:25 /alp/output/batch_analysis/top_models
+Found 9 items
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/avg_price_by_category
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/colour_distribution
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/country_distribution
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/location_distribution
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/page_distribution
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/price_level_distribution
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/summary
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/top_categories
+drwxr-xr-x   - spark supergroup          0 2026-06-11 07:01 /alp/output/batch_analysis/top_models
 ```
 
 Spark Master:
@@ -1048,10 +1023,9 @@ docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/top_categ
 Contoh output:
 
 ```json
-{"main_category":1,"count":49742}
-{"main_category":4,"count":38747}
-{"main_category":3,"count":38577}
-{"main_category":2,"count":38408}
+{"main_category":1,"main_category_name":"Trousers","count":49742}
+{"main_category":4,"main_category_name":"Sale","count":38747}
+{"main_category":3,"main_category_name":"Blouses","count":38577}
 ```
 
 ---
@@ -1068,8 +1042,6 @@ Contoh output:
 {"clothing_model":"B4","count":3579}
 {"clothing_model":"A2","count":3013}
 {"clothing_model":"A11","count":2789}
-{"clothing_model":"P1","count":2681}
-{"clothing_model":"B10","count":2566}
 ...
 ```
 
@@ -1084,10 +1056,59 @@ docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/country_d
 Contoh output:
 
 ```json
-{"country":29,"count":133963}
-{"country":9,"count":18003}
-{"country":24,"count":4091}
+{"country":29,"country_name":"Poland","count":133963}
+{"country":9,"country_name":"Czech Republic","count":18003}
+{"country":24,"country_name":"Lithuania","count":4091}
 ...
+```
+
+---
+
+### Colour Distribution
+
+```bash
+docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/colour_distribution/part-*"
+```
+
+Contoh output:
+
+```json
+{"colour":2,"colour_name":"Black","count":29764}
+{"colour":3,"colour_name":"Blue","count":29259}
+{"colour":6,"colour_name":"Gray","count":17476}
+...
+```
+
+---
+
+### Location Distribution
+
+```bash
+docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/location_distribution/part-*"
+```
+
+Contoh output:
+
+```json
+{"location":1,"location_name":"Top Left","count":34532}
+{"location":2,"location_name":"Top Middle","count":33383}
+{"location":3,"location_name":"Top Right","count":21656}
+...
+```
+
+---
+
+### Price Level Distribution
+
+```bash
+docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/price_level_distribution/part-*"
+```
+
+Contoh output:
+
+```json
+{"price_level":1,"price_level_name":"Above Average","count":84695}
+{"price_level":2,"price_level_name":"Below Average","count":80779}
 ```
 
 ---
@@ -1101,10 +1122,10 @@ docker exec -it alp-namenode hdfs dfs -cat "/alp/output/batch_analysis/avg_price
 Contoh output:
 
 ```json
-{"main_category":1,"average_price":46.71,"total_views":49742}
-{"main_category":2,"average_price":51.19,"total_views":38408}
-{"main_category":3,"average_price":40.29,"total_views":38577}
-{"main_category":4,"average_price":36.23,"total_views":38747}
+{"main_category":1,"main_category_name":"Trousers","average_price":46.71,"total_views":49742}
+{"main_category":2,"main_category_name":"Skirts","average_price":51.19,"total_views":38408}
+{"main_category":3,"main_category_name":"Blouses","average_price":40.29,"total_views":38577}
+...
 ```
 
 ---
@@ -1150,6 +1171,9 @@ File batch_analysis.json berisi hasil ringkasan batch analysis yang akan dibaca 
 - Country distribution
 - Average price by category
 - Page distribution
+- Colour distribution
+- Location distribution
+- Price level distribution
 
 Untuk melihat isi file batch dashboard secara langsung, jalankan:
 
@@ -1181,16 +1205,20 @@ http://localhost:8051
 ```
 
 Dashboard batch dianggap berhasil apabila halaman 📦 Batch Analysis menampilkan:
-- Total Events
-- Unique Sessions
-- Average Price
-- Minimum Price
-- Maximum Price
-- Most Popular Main Categories
-- Top Clothing Models
-- Country Distribution
-- Average Price by Category
-- Page Distribution
+- Total Events: Menampilkan jumlah keseluruhan aktivitas klik yang tercatat selama periode pengamatan. Digunakan sebagai indikator skala dataset yang diproses.
+- Unique Sessions: Menampilkan jumlah sesi belanja unik yang terjadi. Mencerminkan jumlah pengunjung berbeda yang pernah mengakses toko selama periode tersebut.
+- Average Price: Menampilkan rata-rata harga produk yang dikunjungi seluruh pengguna. Memberikan gambaran umum rentang harga produk yang paling banyak dieksplorasi.
+- Minimum Price: Menampilkan harga produk terendah yang ada dalam dataset. Berguna untuk memahami batas bawah segmentasi harga toko.Maximum PriceMenampilkan harga produk tertinggi yang ada dalam dataset. Berguna untuk memahami batas atas segmentasi harga toko.
+- Most Popular Main Categories: Menampilkan kategori produk utama yang paling banyak diklik. Membantu identifikasi segmen produk yang paling diminati secara historis.
+- Top Clothing Models: Menampilkan model pakaian spesifik dengan jumlah view tertinggi. Dapat digunakan sebagai dasar rekomendasi produk unggulan.
+- Country Distribution: Menampilkan distribusi pengunjung berdasarkan negara asal. Mengidentifikasi pasar utama dan potensi ekspansi ke wilayah lain.
+- Average Price by CategoryMenampilkan rata-rata harga untuk setiap kategori produk. Memungkinkan perbandingan segmentasi harga antar kategori.
+- Page Distribution: Menampilkan sebaran kunjungan pengguna berdasarkan nomor halaman katalog. Mengungkap seberapa jauh pengguna menjelajahi katalog, mayoritas pengguna yang berhenti di halaman pertama mengindikasikan perlunya optimasi tampilan awal.
+
+![db-1](assets/db-1.png)
+![db-2](assets/db-2.png)
+![db-3](assets/db-3.png)
+![db-4](assets/db-4.png)
 
 ### Setup Selesai
 ```
@@ -1221,12 +1249,12 @@ Dataset menunjukkan aktivitas browsing yang cukup tinggi dengan lebih dari 165 r
 
 | Main Category | Total Views |
 |----------|----------:|
-| 1 | 49,742 |
-| 4 | 38,747 |
-| 3 | 38,577 |
-| 2 | 38,408 |
+| Trousers | 49,742 |
+| Sale | 38,747 |
+| Blouses | 38,577 |
+| Skirt | 38,408 |
 
-Kategori 1 merupakan kategori yang paling sering dikunjungi dengan hampir 50 ribu view. Temuan ini menunjukkan bahwa kategori tersebut memiliki tingkat ketertarikan pengguna yang paling tinggi dibandingkan kategori lainnya.
+Kategori Trousers merupakan kategori yang paling sering dikunjungi dengan hampir 50 ribu view. Temuan ini menunjukkan bahwa kategori tersebut memiliki tingkat ketertarikan pengguna yang paling tinggi dibandingkan kategori lainnya.
 
 Insight ini dapat digunakan untuk:
 
@@ -1258,13 +1286,11 @@ Model B4 merupakan produk yang paling sering dilihat oleh pengguna. Produk-produ
 
 | Country | Total Views |
 |----------|----------:|
-| 29 | 133,963 |
-| 9 | 18,003 |
-| 24 | 4,091 |
-| 46 | 2,522 |
-| 44 | 1,385 |
+| Poland | 133,963 |
+| Czech Republic | 18,003 |
+| Lithuania | 4,091 |
 
-Sebagian besar aktivitas pengguna berasal dari Country 29 yang menyumbang lebih dari 80% total traffic.
+Sebagian besar aktivitas pengguna berasal dari Country Poland yang menyumbang lebih dari 80% total traffic.
 
 Insight ini menunjukkan bahwa pasar utama platform berada pada wilayah tersebut sehingga strategi pemasaran dapat difokuskan pada negara tersebut untuk memperoleh hasil yang lebih optimal.
 
@@ -1274,16 +1300,14 @@ Insight ini menunjukkan bahwa pasar utama platform berada pada wilayah tersebut 
 
 | Category | Average Price | Total Views |
 |----------|----------:|----------:|
-| 2 | 51.19 | 38,408 |
-| 1 | 46.71 | 49,742 |
-| 3 | 40.29 | 38,577 |
-| 4 | 36.23 | 38,747 |
+| Skirts | 51.19 | 38,408 |
+| Trousers | 46.71 | 49,742 |
+| Blouses | 40.29 | 38,577 |
+| Sale | 36.23 | 38,747 |
 
-Kategori 2 memiliki harga rata-rata tertinggi, namun bukan kategori dengan jumlah view tertinggi.
+Kategori Skirts memiliki harga rata-rata tertinggi namun bukan kategori dengan jumlah view tertinggi. Sebaliknya, Trousers memiliki jumlah view tertinggi dengan harga rata-rata yang lebih rendah.
 
-Sebaliknya, kategori 1 memiliki jumlah view tertinggi dengan harga rata-rata yang lebih rendah.
-
-Hal ini menunjukkan bahwa pengguna cenderung lebih aktif mengeksplorasi produk dengan rentang harga menengah dibandingkan produk dengan harga tertinggi.
+Hal ini menunjukkan bahwa pengguna cenderung lebih aktif mengeksplorasi produk dengan rentang harga menengah. Kategori Sale dengan harga terendah tetap menarik trafik yang tinggi, memperkuat indikasi bahwa harga adalah faktor pertimbangan utama pengguna.
 
 ---
 
@@ -1297,7 +1321,7 @@ Hal ini menunjukkan bahwa pengguna cenderung lebih aktif mengeksplorasi produk d
 | 4 | 8,861 |
 | 5 | 2,823 |
 
-Lebih dari setengah aktivitas pengguna terjadi pada halaman pertama katalog.
+Lebih dari setengah aktivitas (56%) pengguna terjadi pada halaman pertama katalog.
 
 Jumlah view menurun secara signifikan pada halaman-halaman berikutnya.
 
