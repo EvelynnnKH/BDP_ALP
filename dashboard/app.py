@@ -460,12 +460,17 @@ docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
                 top_categories_df["count"] = top_categories_df["count"].astype(int)
 
                 st.bar_chart(
-                    top_categories_df.set_index("main_category")["count"],
+                    top_categories_df.set_index("main_category_name")["count"],
                     color="#E23744"
                 )
 
                 st.dataframe(
-                    top_categories_df,
+                    top_categories_df[
+                        ["main_category_name", "count"]
+                    ].rename(columns={
+                        "main_category_name": "Category",
+                        "count": "Views"
+                    }),
                     use_container_width=True,
                     hide_index=True
                 )
@@ -509,13 +514,18 @@ docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
                 country_df["count"] = country_df["count"].astype(int)
 
                 st.bar_chart(
-                    country_df.set_index("country")["count"],
+                    country_df.set_index("country_name")["count"],
                     horizontal=True,
                     color="#E23744"
                 )
 
                 st.dataframe(
-                    country_df,
+                    country_df[
+                        ["country_name", "count"]
+                    ].rename(columns={
+                        "country_name": "Country",
+                        "count": "Views"
+                    }),
                     use_container_width=True,
                     hide_index=True
                 )
@@ -536,12 +546,20 @@ docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
                     data=avg_price_df,
                     x="average_price",
                     y="total_views",
-                    color="main_category",
+                    color="main_category_name",
                     size="total_views"
                 )
 
                 st.dataframe(
-                    avg_price_df,
+                    avg_price_df[
+                        ["main_category_name",
+                        "average_price",
+                        "total_views"]
+                    ].rename(columns={
+                        "main_category_name": "Category",
+                        "average_price": "Average Price",
+                        "total_views": "Views"
+                    }),
                     use_container_width=True,
                     hide_index=True
                 )
@@ -577,7 +595,7 @@ docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
 
         top_category = "-"
         if not top_categories_df.empty:
-            top_category = top_categories_df.sort_values("count", ascending=False).iloc[0]["main_category"]
+            top_category = top_categories_df.sort_values("count", ascending=False).iloc[0]["main_category_name"]
 
         top_model = "-"
         if not top_models_df.empty:
@@ -585,7 +603,7 @@ docker exec -it alp-spark-master /opt/spark/bin/spark-submit \\
 
         top_country = "-"
         if not country_df.empty:
-            top_country = country_df.sort_values("count", ascending=False).iloc[0]["country"]
+            top_country = country_df.sort_values("count", ascending=False).iloc[0]["country_name"]
 
         with insight_col1:
             st.markdown(f"""

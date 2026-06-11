@@ -40,6 +40,7 @@ Project ini menjawab ketiga tantangan tersebut dengan membangun pipeline yang me
 - Produk apa yang sedang memperoleh klik terbanyak?
 - Berapa jumlah event yang masuk pada setiap periode waktu?
 - Bagaimana perubahan tren kategori dari batch ke batch secara real-time?
+- Bagaimana rata-rata harga produk per kategori secara real-time?
 
 ### Batch Analysis
 **Permasalahan:** Data real-time hanya menunjukkan kondisi saat ini, tetapi tidak dapat menjelaskan pola perilaku pengguna secara keseluruhan selama periode yang panjang.
@@ -52,6 +53,9 @@ Project ini menjawab ketiga tantangan tersebut dengan membangun pipeline yang me
 - Negara mana yang memberikan kontribusi traffic terbesar?
 - Bagaimana hubungan harga produk dengan jumlah view?
 - Halaman katalog mana yang paling sering dikunjungi?
+- Warna produk apa yang paling banyak diminati secara historis?
+- Di lokasi mana di halaman produk pengguna paling sering mengklik?
+- Apakah pengguna lebih banyak mengklik produk dengan harga di atas atau di bawah rata-rata?
 
 ---
  ## Project Description
@@ -529,17 +533,16 @@ Jika berhasil dijalankan, Spark akan menampilkan hasil agregasi setiap micro-bat
 
 ```text
 ------------------------------------------------------------
-Batch: 0 | Total events: 706
+Batch: 9 | Total events processed in this batch: 66
 ------------------------------------------------------------
-
-+-------------+-----+
-|main_category|count|
-+-------------+-----+
-|1            |223  |
-|2            |216  |
-|3            |157  |
-|4            |110  |
-+-------------+-----+
++------------------+-----+
+|main_category_name|count|
++------------------+-----+
+|Blouses           |19   |
+|Sale              |14   |
+|Skirts            |26   |
+|Trousers          |7    |
++------------------+-----+
 ```
 Expected Result:
 (assets/step7-result.png)
@@ -949,7 +952,6 @@ Selain menampilkan hasil ke terminal, Spark juga akan menyimpan hasil analisis k
 ![batch-1](assets/batch-1.png)
 ![batch-2](assets/batch-2.png)
 ![batch-3](assets/batch-3.png)
-![batch-4](assets/batch-4.png)
 
 ---
 
